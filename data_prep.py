@@ -9,6 +9,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 from torchvision.models import resnet101, ResNet101_Weights
+import numpy as np
 
 from GTSRB import GTSRB_Test
 from feature_extractor import FeatureExtractor
@@ -45,9 +46,26 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_si
 def rep(model, device, test_loader):
 	model.eval()
 
+	features = []
+	accu = 0
+	total = 0
+
 	for data,target in test_loader:
 		data, target = data.to(device), target.to(device)
 		X, y = Variable(data), Variable(target)
+
+		feat = model[0](X).reshape(X.shape[0], 2048)
+
+		#push representation to the list
+		features.extend(feat.cpu().detach().numpy())
+
+		#pass thru linear layer to obtain prediction result
+		pred = model[1](feat)
+
+		accu += (pred.data.max(1)[1] == y.data).float().sum()
+		total += X.shape[0]
+
+	print(accu/total)
 
 def main():
 	#initialize model
@@ -56,10 +74,16 @@ def main():
 	model.load_state_dict(torch.load(args.model_path))
 	model = model.to(device)
 
+	#print(model.state_dict().keys())
+
 	backbone = FeatureExtractor(model)
 	backbone = backbone.to(device)
 
-	rep(backbone, device, test_loader)
+	fc = model.fc
+
+	model_ = nn.Sequential(backbone, fc)
+
+	rep(model_, device, test_loader)
 
 if __name__ == '__main__':
 	main()
