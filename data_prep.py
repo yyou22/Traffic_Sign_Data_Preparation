@@ -7,19 +7,26 @@ import torch.nn.functional as F
 import torchvision
 import torch.optim as optim
 from torchvision import datasets, transforms
+from torch.autograd import Variable
 from torchvision.models import resnet101, ResNet101_Weights
 
 from GTSRB import GTSRB_Test
-from models.wideresnet import *
-from models.resnet import *
-from trades import trades_loss
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
 parser.add_argument('--model-path',
-                    default='./checkpoints/model_gtsrb_wrn.pt',
+                    default='./checkpoints/model_gtsrb_rn.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
+parser.add_argument('--no-cuda', action='store_true', default=False,
+                    help='disables CUDA training')
+
+args = parser.parse_args()
+
+# settings
+use_cuda = not args.no_cuda and torch.cuda.is_available()
+device = torch.device("cuda" if use_cuda else "cpu")
+kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
 # set up data loader
 transform_test = transforms.Compose([
