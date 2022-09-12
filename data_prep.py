@@ -11,6 +11,7 @@ from torch.autograd import Variable
 from torchvision.models import resnet101, ResNet101_Weights
 
 from GTSRB import GTSRB_Test
+from feature_extractor import FeatureExtractor
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
 parser.add_argument('--model-path',
@@ -52,10 +53,10 @@ def main():
 	#initialize model
 	model = resnet101()
 	model.fc = nn.Linear(2048, 43)
+	model.load_state_dict(torch.load(args.model_path))
 	model = model.to(device)
 
-	model.load_state_dict(torch.load(args.model_path))
-	backbone = model.features
+	backbone = FeatureExtractor(model)
 	backbone = backbone.to(device)
 
 	rep(backbone, device, test_loader)
