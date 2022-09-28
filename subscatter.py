@@ -11,16 +11,17 @@ from torchvision import datasets, transforms
 from torch.autograd import Variable
 from torchvision.models import resnet101, ResNet101_Weights
 import numpy as np
+from torch.utils.data import Subset, DataLoader
 
 from GTSRB import GTSRB_Test
 from feature_extractor import FeatureExtractor
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
 parser.add_argument('--model-path-bm',
-                    default='./checkpoints/model_gtsrb_rn_bm.pt',
+                    default='./checkpoints/model_gtsrb_rn_nat.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--model-path-cur',
-                    default='./checkpoints/model_gtsrb_rn_cur.pt',
+                    default='./checkpoints/model_gtsrb_rn_adv1.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
@@ -45,7 +46,7 @@ testset = GTSRB_Test(
     transform=transform_test
 )
 
-#test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 def TSNE_(data):
 
@@ -76,8 +77,9 @@ def main():
 	backbone2 = backbone2.to(device)
 	fc2 = model2.fc
 
-	print(testset.class_to_idx)
 
+if __name__ == '__main__':
+	main()
 
 
 
