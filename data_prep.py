@@ -1,4 +1,5 @@
 from __future__ import print_function
+from sklearn.manifold import TSNE
 import os
 import argparse
 import torch
@@ -16,7 +17,7 @@ from feature_extractor import FeatureExtractor
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
 parser.add_argument('--model-path',
-                    default='./checkpoints/model_gtsrb_rn.pt',
+                    default='./checkpoints/model_gtsrb_rn_adv1.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
@@ -43,10 +44,23 @@ testset = GTSRB_Test(
 
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
+def TSNE_(data):
+
+	tsne = TSNE(n_components=2)
+	data = tsne.fit_transform(data)
+
+	return data
+
 def rep(model, device, test_loader):
 	model.eval()
 
+	#feature list
 	features = []
+	#prediction list
+	predictions = []
+	#target list
+	targets = []
+
 	accu = 0
 	total = 0
 
@@ -56,16 +70,35 @@ def rep(model, device, test_loader):
 
 		feat = model[0](X).reshape(X.shape[0], 2048)
 
-		#push representation to the list
-		features.extend(feat.cpu().detach().numpy())
-
 		#pass thru linear layer to obtain prediction result
 		pred = model[1](feat)
 
 		accu += (pred.data.max(1)[1] == y.data).float().sum()
 		total += X.shape[0]
 
-	print(accu/total)
+		targets.extend(y.data.cpu().detach().numpy())
+		predictions.extend(pred.data.max(1)[1].cpu().detach().numpy())
+		#push representation to the list
+		features.extend(feat.cpu().detach().numpy())
+	
+	#convert to numpy arrays
+	targets = np.array(targets)
+	predictions = np.array(predictions)
+	features = np.array(features)
+
+	print("Prediction Accuracy:" + str(accu/total))
+
+	return features, predictions, targets
+
+def dimen_reduc(features):
+	
+	feature_t = TSNE_(features)
+
+	tx, ty = feature_t[:, 0].reshape(12630, 1), feature_t[:, 1].reshape(12630, 1)
+	tx = (tx-np.min(tx)) / (np.max(tx) - np.min(tx))
+	ty = (ty-np.min(ty)) / (np.max(ty) - np.min(ty))
+
+	return tx, ty
 
 def main():
 	#initialize model
@@ -83,7 +116,21 @@ def main():
 
 	model_ = nn.Sequential(backbone, fc)
 
-	rep(model_, device, test_loader)
+	features, predictions, targets = rep(model_, device, test_loader)
+
+	tx, ty = dimen_reduc(features)
+
+	#convert to tabular data
+	path = "./tabu_data/"
+	if not os.path.exists(path):
+		os.makedirs(path)
+	
+	predictions = predictions.reshape(predictions.shape[0], 1)
+	targets = targets.reshape(targets.shape[0], 1)
+
+	result = np.concatenate((tx, ty, predictions, targets), axis=1)
+	type_ = ['%.5f'] * 2 + ['%d'] * 2
+	np.savetxt(path + "data.csv", result, header="xpos,ypos,pred,target", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
