@@ -8,7 +8,7 @@ from PIL import Image
 
 class GTSRB_Test_Sub(Dataset):
 
-    def __init__(self, root_dir, class, transform=None):
+    def __init__(self, root_dir, class_, transform=None):
         """
         Args:
             train (bool): Load trainingset or test set.
@@ -24,7 +24,7 @@ class GTSRB_Test_Sub(Dataset):
 
         self.csv_data = pd.read_csv(csv_file_path, sep=';', usecols=["Filename", "ClassId"])
 
-        self.csv_data = self.csv_data[self.csv_data['ClassId']==class]
+        self.csv_data = self.csv_data[self.csv_data['ClassId']==class_]
 
         self.transform = transform
 

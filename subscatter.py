@@ -14,6 +14,7 @@ import numpy as np
 from torch.utils.data import Subset, DataLoader
 
 from GTSRB import GTSRB_Test
+from GTSRB_sub import GTSRB_Test_Sub
 from feature_extractor import FeatureExtractor
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
@@ -79,7 +80,7 @@ def main():
 
 	testset1 = GTSRB_Test_Sub(
 			    root_dir='/content/data/GTSRB-Test/Final_Test/Images/',
-			    class = 0,
+			    class_ = 0,
 			    transform=transform_test)
 
 
