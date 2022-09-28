@@ -77,6 +77,11 @@ def main():
 	backbone2 = backbone2.to(device)
 	fc2 = model2.fc
 
+	testset1 = GTSRB_Test_Sub(
+			    root_dir='/content/data/GTSRB-Test/Final_Test/Images/',
+			    class = 0,
+			    transform=transform_test)
+
 
 if __name__ == '__main__':
 	main()

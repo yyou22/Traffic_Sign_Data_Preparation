@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 
 
-class GTSRB_Test(Dataset):
+class GTSRB_Test_Sub(Dataset):
 
     def __init__(self, root_dir, class, transform=None):
         """
