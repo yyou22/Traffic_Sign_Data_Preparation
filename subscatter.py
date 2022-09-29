@@ -47,6 +47,8 @@ testset = GTSRB_Test(
     transform=transform_test
 )
 
+n_class = 43
+
 #test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 def TSNE_(data):
@@ -147,30 +149,32 @@ def main():
 	fc2 = model2.fc
 	model_2 = nn.Sequential(backbone2, fc2)
 
-	testset0 = GTSRB_Test_Sub(
-			    root_dir='/content/data/GTSRB-Test/Final_Test/Images/',
-			    class_ = 0,
-			    transform=transform_test)
+	for i in range(0, n_class):
 
-	test_loader0 = torch.utils.data.DataLoader(testset0, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+		testset0 = GTSRB_Test_Sub(
+				    root_dir='/content/data/GTSRB-Test/Final_Test/Images/',
+				    class_ = i,
+				    transform=transform_test)
 
-	features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, device, test_loader0)
+		test_loader0 = torch.utils.data.DataLoader(testset0, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-	tx, ty = dimen_reduc(features, len(testset0))
+		features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, device, test_loader0)
 
-	#convert to tabular data
-	path = "./tabu_data/0/"
-	if not os.path.exists(path):
-		os.makedirs(path)
-	
-	predictions = predictions.reshape(predictions.shape[0], 1)
-	targets = targets.reshape(targets.shape[0], 1)
-	adv_class = adv_class.reshape(adv_class.shape[0], 1)
-	match_idx = match_idx.reshape(match_idx.shape[0], 1)
+		tx, ty = dimen_reduc(features, len(testset0))
 
-	result = np.concatenate((tx, ty, predictions, targets, adv_class, match_idx), axis=1)
-	type_ = ['%.5f'] * 2 + ['%d'] * 4
-	np.savetxt(path + "data_bn_an.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
+		#convert to tabular data
+		path = "./tabu_data/" + str(i) + "/"
+		if not os.path.exists(path):
+			os.makedirs(path)
+		
+		predictions = predictions.reshape(predictions.shape[0], 1)
+		targets = targets.reshape(targets.shape[0], 1)
+		adv_class = adv_class.reshape(adv_class.shape[0], 1)
+		match_idx = match_idx.reshape(match_idx.shape[0], 1)
+
+		result = np.concatenate((tx, ty, predictions, targets, adv_class, match_idx), axis=1)
+		type_ = ['%.5f'] * 2 + ['%d'] * 4
+		np.savetxt(path + "data_bn_an.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
