@@ -47,7 +47,7 @@ testset = GTSRB_Test(
     transform=transform_test
 )
 
-test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+#test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 def TSNE_(data):
 
@@ -55,6 +55,73 @@ def TSNE_(data):
 	data = tsne.fit_transform(data)
 
 	return data
+
+def rep(model1, model2, device, test_loader):
+
+	model1.eval()
+	model2.eval()
+
+	#feature list
+	features = []
+	#prediction list
+	predictions = []
+	#target list
+	targets = []
+	#adv class
+	adv_class = []
+	#match index
+	match_idx = []
+	idx = 0
+
+	for data,target in test_loader:
+		data, target = data.to(device), target.to(device)
+		X, y = Variable(data), Variable(target)
+
+		lc = [n for n in range(idx, idx + X.shape[0])]
+		idx = idx + X.shape[0]
+
+		feat1 = model1[0](X).reshape(X.shape[0], 2048)
+
+		#pass thru linear layer to obtain prediction result
+		pred1 = model1[1](feat1)
+
+		targets.extend(y.data.cpu().detach().numpy())
+		predictions.extend(pred1.data.max(1)[1].cpu().detach().numpy())
+		#push representation to the list
+		features.extend(feat1.cpu().detach().numpy())
+		adv_class.extend([0] * X.shape[0])
+		match_idx.extend(lc)
+
+		feat2 = model2[0](X).reshape(X.shape[0], 2048)
+
+		#pass thru linear layer to obtain prediction result
+		pred2 = model2[1](feat2)
+
+		targets.extend(y.data.cpu().detach().numpy())
+		predictions.extend(pred2.data.max(1)[1].cpu().detach().numpy())
+		#push representation to the list
+		features.extend(feat2.cpu().detach().numpy())
+		adv_class.extend([1] * X.shape[0])
+		match_idx.extend(lc)
+
+	#convert to numpy arrays
+	targets = np.array(targets)
+	predictions = np.array(predictions)
+	features = np.array(features)
+	adv_class = np.array(adv_class)
+	match_idx = np.array(match_idx)
+
+	return features, targets, predictions, adv_class, match_idx 
+
+def dimen_reduc(features, num_data):
+	
+	feature_t = TSNE_(features)
+
+	tx, ty = feature_t[:, 0].reshape(num_data*2, 1), feature_t[:, 1].reshape(num_data*2, 1)
+	tx = (tx-np.min(tx)) / (np.max(tx) - np.min(tx))
+	ty = (ty-np.min(ty)) / (np.max(ty) - np.min(ty))
+
+	return tx, ty
 
 def main():
 
@@ -67,6 +134,7 @@ def main():
 	backbone1 = FeatureExtractor(model1)
 	backbone1 = backbone1.to(device)
 	fc1 = model1.fc
+	model_1 = nn.Sequential(backbone1, fc1)
 
 	#initilaize model 2 (current model)
 	model2 = resnet101()
@@ -77,12 +145,32 @@ def main():
 	backbone2 = FeatureExtractor(model2)
 	backbone2 = backbone2.to(device)
 	fc2 = model2.fc
+	model_2 = nn.Sequential(backbone2, fc2)
 
-	testset1 = GTSRB_Test_Sub(
+	testset0 = GTSRB_Test_Sub(
 			    root_dir='/content/data/GTSRB-Test/Final_Test/Images/',
 			    class_ = 0,
 			    transform=transform_test)
 
+	test_loader0 = torch.utils.data.DataLoader(testset0, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
+	features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, device, test_loader0)
+
+	tx, ty = dimen_reduc(features, len(testset0))
+
+	#convert to tabular data
+	path = "./tabu_data/0/"
+	if not os.path.exists(path):
+		os.makedirs(path)
+	
+	predictions = predictions.reshape(predictions.shape[0], 1)
+	targets = targets.reshape(targets.shape[0], 1)
+	adv_class = adv_class.reshape(adv_class.shape[0], 1)
+	match_idx = match_idx.reshape(match_idx.shape[0], 1)
+
+	result = np.concatenate((tx, ty, predictions, targets, adv_class, match_idx), axis=1)
+	type_ = ['%.5f'] * 2 + ['%d'] * 4
+	np.savetxt(path + "data_bn_an.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
