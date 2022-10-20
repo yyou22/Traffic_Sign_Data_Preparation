@@ -28,6 +28,17 @@ parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
+parser.add_argument('--mode', default=1,
+                    help='define whcih subcanvas')
+parser.add_argument('--epsilon', default=0.031,
+                    help='perturbation')
+parser.add_argument('--num-steps', default=20,
+                    help='perturb number of steps')
+parser.add_argument('--step-size', default=0.003,
+                    help='perturb step size')
+parser.add_argument('--random',
+                    default=True,
+                    help='random initialization for PGD')
 
 args = parser.parse_args()
 
@@ -58,6 +69,31 @@ def TSNE_(data):
 
 	return data
 
+def pgd(model,
+                  X,
+                  epsilon=args.epsilon,
+                  num_steps=args.num_steps,
+                  step_size=args.step_size):
+    X_pgd = Variable(X.data, requires_grad=True)
+    if args.random:
+        random_noise = torch.FloatTensor(*X_pgd.shape).uniform_(-epsilon, epsilon).to(device)
+        X_pgd = Variable(X_pgd.data + random_noise, requires_grad=True)
+
+    for _ in range(num_steps):
+        opt = optim.SGD([X_pgd], lr=1e-3)
+        opt.zero_grad()
+
+        with torch.enable_grad():
+            loss = nn.CrossEntropyLoss()(model(X_pgd), y)
+        loss.backward()
+        eta = step_size * X_pgd.grad.data.sign()
+        X_pgd = Variable(X_pgd.data + eta, requires_grad=True)
+        eta = torch.clamp(X_pgd.data - X.data, -epsilon, epsilon)
+        X_pgd = Variable(X.data + eta, requires_grad=True)
+        X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
+    return X_pgd
+
+
 def rep(model1, model2, device, test_loader):
 
 	model1.eval()
@@ -82,6 +118,9 @@ def rep(model1, model2, device, test_loader):
 		lc = [n for n in range(idx, idx + X.shape[0])]
 		idx = idx + X.shape[0]
 
+		if args.mode == 2:
+			X = pgd(model1, X)
+
 		feat1 = model1[0](X).reshape(X.shape[0], 2048)
 
 		#pass thru linear layer to obtain prediction result
@@ -93,6 +132,9 @@ def rep(model1, model2, device, test_loader):
 		features.extend(feat1.cpu().detach().numpy())
 		adv_class.extend([0] * X.shape[0])
 		match_idx.extend(lc)
+
+		if args.mode == 2:
+			X = pgd(model2, X)
 
 		feat2 = model2[0](X).reshape(X.shape[0], 2048)
 
@@ -174,7 +216,11 @@ def main():
 
 		result = np.concatenate((tx, ty, predictions, targets, adv_class, match_idx), axis=1)
 		type_ = ['%.5f'] * 2 + ['%d'] * 4
-		np.savetxt(path + "data_bn_an.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
+		
+		if args.mode == 1:
+			np.savetxt(path + "data_bn_an.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
+		elif args.mode == 2:
+			np.savetxt(path + "data_ba_aa.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
