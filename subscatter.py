@@ -28,7 +28,7 @@ parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--mode', default=1,
+parser.add_argument('--mode', default=2,
                     help='define whcih subcanvas')
 parser.add_argument('--epsilon', default=0.031,
                     help='perturbation')
@@ -71,6 +71,7 @@ def TSNE_(data):
 
 def pgd(model,
                   X,
+                  y,
                   epsilon=args.epsilon,
                   num_steps=args.num_steps,
                   step_size=args.step_size):
@@ -94,7 +95,7 @@ def pgd(model,
     return X_pgd
 
 
-def rep(model1, model2, device, test_loader):
+def rep(model1, model2, model1og, model2og, device, test_loader):
 
 	model1.eval()
 	model2.eval()
@@ -119,7 +120,7 @@ def rep(model1, model2, device, test_loader):
 		idx = idx + X.shape[0]
 
 		if args.mode == 2:
-			X = pgd(model1, X)
+			X = pgd(model1og, X, y)
 
 		feat1 = model1[0](X).reshape(X.shape[0], 2048)
 
@@ -134,7 +135,7 @@ def rep(model1, model2, device, test_loader):
 		match_idx.extend(lc)
 
 		if args.mode == 2:
-			X = pgd(model2, X)
+			X = pgd(model2og, X, y)
 
 		feat2 = model2[0](X).reshape(X.shape[0], 2048)
 
@@ -200,7 +201,7 @@ def main():
 
 		test_loader0 = torch.utils.data.DataLoader(testset0, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-		features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, device, test_loader0)
+		features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, model1, model2, device, test_loader0)
 
 		tx, ty = dimen_reduc(features, len(testset0))
 
