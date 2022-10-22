@@ -28,7 +28,7 @@ parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--mode', default=3,
+parser.add_argument('--mode', default=4,
                     help='define whcih subcanvas')
 parser.add_argument('--epsilon', default=0.031,
                     help='perturbation')
@@ -263,6 +263,8 @@ def main():
 			features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, model1, model2, device, test_loader0)
 		elif args.mode == 3:
 			features, predictions, targets, adv_class, match_idx = rep2(model_1, model1, device, test_loader0)
+		elif args.mode == 4:
+			features, predictions, targets, adv_class, match_idx = rep2(model_2, model2, device, test_loader0)
 
 		tx, ty = dimen_reduc(features, len(testset0))
 
@@ -285,6 +287,8 @@ def main():
 			np.savetxt(path + "data_ba_aa.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
 		elif args.mode == 3:
 			np.savetxt(path + "data_bn_ba.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
+		elif args.mode == 4:
+			np.savetxt(path + "data_an_aa.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
