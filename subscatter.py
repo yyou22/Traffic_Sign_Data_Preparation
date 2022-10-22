@@ -28,7 +28,7 @@ parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--mode', default=2,
+parser.add_argument('--mode', default=3,
                     help='define whcih subcanvas')
 parser.add_argument('--epsilon', default=0.031,
                     help='perturbation')
@@ -262,7 +262,7 @@ def main():
 		if args.mode == 1 or args.mode == 2:
 			features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, model1, model2, device, test_loader0)
 		elif args.mode == 3:
-			features, predictions, targets, adv_class, match_idx = rep(model_1, model1, device, test_loader0)
+			features, predictions, targets, adv_class, match_idx = rep2(model_1, model1, device, test_loader0)
 
 		tx, ty = dimen_reduc(features, len(testset0))
 
