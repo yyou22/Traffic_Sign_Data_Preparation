@@ -94,6 +94,64 @@ def pgd(model,
         X_pgd = Variable(torch.clamp(X_pgd, 0, 1.0), requires_grad=True)
     return X_pgd
 
+def rep2(model, modelog, device, test_loader):
+
+	model.eval()
+
+	#feature list
+	features = []
+	#prediction list
+	predictions = []
+	#target list
+	targets = []
+	#adv class
+	adv_class = []
+	#match index
+	match_idx = []
+	idx = 0
+
+	for data,target in test_loader:
+		data, target = data.to(device), target.to(device)
+		X, y = Variable(data), Variable(target)
+
+		lc = [n for n in range(idx, idx + X.shape[0])]
+		idx = idx + X.shape[0]
+
+		feat1 = model[0](X).reshape(X.shape[0], 2048)
+
+		#pass thru linear layer to obtain prediction result
+		pred1 = model[1](feat1)
+
+		targets.extend(y.data.cpu().detach().numpy())
+		predictions.extend(pred1.data.max(1)[1].cpu().detach().numpy())
+		#push representation to the list
+		features.extend(feat1.cpu().detach().numpy())
+		adv_class.extend([0] * X.shape[0])
+		match_idx.extend(lc)
+
+		X = pgd(modelog, X, y)
+
+		feat2 = model[0](X).reshape(X.shape[0], 2048)
+
+		#pass thru linear layer to obtain prediction result
+		pred2 = model[1](feat2)
+
+		targets.extend(y.data.cpu().detach().numpy())
+		predictions.extend(pred2.data.max(1)[1].cpu().detach().numpy())
+		#push representation to the list
+		features.extend(feat2.cpu().detach().numpy())
+		adv_class.extend([1] * X.shape[0])
+		match_idx.extend(lc)
+
+	#convert to numpy arrays
+	targets = np.array(targets)
+	predictions = np.array(predictions)
+	features = np.array(features)
+	adv_class = np.array(adv_class)
+	match_idx = np.array(match_idx)
+
+	return features, predictions, targets, adv_class, match_idx 
+
 
 def rep(model1, model2, model1og, model2og, device, test_loader):
 
@@ -156,7 +214,7 @@ def rep(model1, model2, model1og, model2og, device, test_loader):
 	adv_class = np.array(adv_class)
 	match_idx = np.array(match_idx)
 
-	return features, targets, predictions, adv_class, match_idx 
+	return features, predictions, targets, adv_class, match_idx 
 
 def dimen_reduc(features, num_data):
 	
@@ -201,7 +259,10 @@ def main():
 
 		test_loader0 = torch.utils.data.DataLoader(testset0, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-		features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, model1, model2, device, test_loader0)
+		if args.mode == 1 or args.mode == 2:
+			features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, model1, model2, device, test_loader0)
+		elif args.mode == 3:
+			features, predictions, targets, adv_class, match_idx = rep(model_1, model1, device, test_loader0)
 
 		tx, ty = dimen_reduc(features, len(testset0))
 
@@ -222,6 +283,8 @@ def main():
 			np.savetxt(path + "data_bn_an.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
 		elif args.mode == 2:
 			np.savetxt(path + "data_ba_aa.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
+		elif args.mode == 3:
+			np.savetxt(path + "data_bn_ba.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
