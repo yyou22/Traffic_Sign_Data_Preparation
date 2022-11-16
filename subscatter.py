@@ -28,7 +28,7 @@ parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--mode', default=4,
+parser.add_argument('--mode', default=1,
                     help='define whcih subcanvas')
 parser.add_argument('--epsilon', default=0.031,
                     help='perturbation')
@@ -242,7 +242,8 @@ def main():
 	#initilaize model 2 (current model)
 	model2 = resnet101()
 	model2.fc = nn.Linear(2048, 43)
-	model2.load_state_dict(torch.load(args.model_path_cur))
+	#model2.load_state_dict(torch.load(args.model_path_cur))
+	model2.load_state_dict(torch.load(args.model_path_bm))
 	model2 = model2.to(device)
 
 	backbone2 = FeatureExtractor(model2)
@@ -269,7 +270,7 @@ def main():
 		tx, ty = dimen_reduc(features, len(testset0))
 
 		#convert to tabular data
-		path = "./tabu_data/" + str(i) + "/"
+		path = "./tabu_data0/" + str(i) + "/"
 		if not os.path.exists(path):
 			os.makedirs(path)
 		
