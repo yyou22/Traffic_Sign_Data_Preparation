@@ -62,7 +62,7 @@ testset = GTSRB_Test(
 
 n_class = 43
 
-#test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 def TSNE_(data):
 
@@ -107,13 +107,14 @@ def attack(model, device, test_loader):
 		data, target = data.to(device), target.to(device)
 		X, y = Variable(data), Variable(target)
 
-		lc = [n for n in range(idx, idx + X.shape[0])]
-		idx = idx + X.shape[0]
+		X = pgd(model, X, y)
 
-		X = pgd(modelog, X, y)
+		attack_imgs.extend(X.cpu().detach().numpy())
 
-	return
+	#convert to numpy arrays
+	attack_imgs = np.array(attack_imgs)
 
+	return attack_imgs
 
 def main():
 
@@ -124,12 +125,12 @@ def main():
 	model = model.to(device)
 
 	#convert to tabular data
-	path = "content/attack_data/"
+	path = "./attack_data/"
 	if not os.path.exists(path):
 		os.makedirs(path)
+
+	attack_imgs = attack(model, device, test_loader)
+	np.save(path + "X_pgd_1", attack_imgs)
 	
 if __name__ == '__main__':
 	main()
-
-
-
