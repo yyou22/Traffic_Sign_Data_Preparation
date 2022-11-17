@@ -18,9 +18,6 @@ from GTSRB_sub import GTSRB_Test_Sub
 from feature_extractor import FeatureExtractor
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
-parser.add_argument('--model-path-bm',
-                    default='./checkpoints/model_gtsrb_rn_nat.pt',
-                    help='model for white-box attack evaluation')
 parser.add_argument('--model-path-cur',
                     default='./checkpoints/model_gtsrb_rn_adv1.pt',
                     help='model for white-box attack evaluation')
@@ -51,8 +48,8 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
 # set up data loader
 transform_test = transforms.Compose([
-	transforms.Resize((96, 96)),
-	transforms.ToTensor(),
+    transforms.Resize((96, 96)),
+    transforms.ToTensor(),
 ])
 
 testset = GTSRB_Test(
@@ -66,10 +63,10 @@ test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_si
 
 def TSNE_(data):
 
-	tsne = TSNE(n_components=2)
-	data = tsne.fit_transform(data)
+    tsne = TSNE(n_components=2)
+    data = tsne.fit_transform(data)
 
-	return data
+    return data
 
 def pgd(model,
                   X,
@@ -99,38 +96,38 @@ def pgd(model,
 
 def attack(model, device, test_loader):
 
-	model.eval()
+    model.eval()
 
-	attack_imgs = []
+    attack_imgs = []
 
-	for data,target in test_loader:
-		data, target = data.to(device), target.to(device)
-		X, y = Variable(data), Variable(target)
+    for data,target in test_loader:
+        data, target = data.to(device), target.to(device)
+        X, y = Variable(data), Variable(target)
 
-		X = pgd(model, X, y)
+        X = pgd(model, X, y)
 
-		attack_imgs.extend(X.cpu().detach().numpy())
+        attack_imgs.extend(X.cpu().detach().numpy())
 
-	#convert to numpy arrays
-	attack_imgs = np.array(attack_imgs)
+    #convert to numpy arrays
+    attack_imgs = np.array(attack_imgs)
 
-	return attack_imgs
+    return attack_imgs
 
 def main():
 
-	#initialize model attacked
-	model = resnet101()
-	model.fc = nn.Linear(2048, 43)
-	model.load_state_dict(torch.load(args.model_path_bm))
-	model = model.to(device)
+    #initialize model attacked
+    model = resnet101()
+    model.fc = nn.Linear(2048, 43)
+    model.load_state_dict(torch.load(args.model_path_cur))
+    model = model.to(device)
 
-	#convert to tabular data
-	path = "./attack_data/"
-	if not os.path.exists(path):
-		os.makedirs(path)
+    #convert to tabular data
+    path = "./attack_data/"
+    if not os.path.exists(path):
+        os.makedirs(path)
 
-	attack_imgs = attack(model, device, test_loader)
-	np.save(path + "X_pgd_1", attack_imgs)
-	
+    attack_imgs = attack(model, device, test_loader)
+    np.save(path + "X_pgd_0", attack_imgs)
+    
 if __name__ == '__main__':
-	main()
+    main()
