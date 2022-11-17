@@ -30,15 +30,6 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--mode', default=1,
                     help='define whcih subcanvas')
-parser.add_argument('--epsilon', default=0.031,
-                    help='perturbation')
-parser.add_argument('--num-steps', default=20,
-                    help='perturb number of steps')
-parser.add_argument('--step-size', default=0.003,
-                    help='perturb step size')
-parser.add_argument('--random',
-                    default=True,
-                    help='random initialization for PGD')
 
 args = parser.parse_args()
 
@@ -85,8 +76,11 @@ def rep2(model, modelog, device, test_loader0, test_loader1):
 	match_idx = []
 	idx = 0
 
-	for i in range(len(test_loader0.dataset)):
-		data, target = test_loader0.dataset[i][0].to(device), test_loader0.dataset[i][1].to(device)
+	iter1 = iter(test_loader1)
+
+	for data, target in test_loader0:
+
+		data, target = data.to(device), target.to(device)
 		X, y = Variable(data), Variable(target)
 
 		lc = [n for n in range(idx, idx + X.shape[0])]
@@ -104,7 +98,8 @@ def rep2(model, modelog, device, test_loader0, test_loader1):
 		adv_class.extend([0] * X.shape[0])
 		match_idx.extend(lc)
 
-		data, target = test_loader1.dataset[i][0].to(device), test_loader1.dataset[i][1].to(device)
+		data, target = next(iter1)
+		data, target = data.to(device), target.to(device)
 		X, y = Variable(data), Variable(target)
 
 		feat2 = model[0](X).reshape(X.shape[0], 2048)
@@ -146,16 +141,20 @@ def rep(model1, model2, model1og, model2og, device, test_loader0, test_loader1, 
 	match_idx = []
 	idx = 0
 
-	for i in range(len(test_loader0.dataset)):
+	iter1 = iter(test_loader1)
+	iter2 = iter(test_loader2)
 
-		data, target = test_loader0.dataset[i][0].to(device), test_loader0.dataset[i][1].to(device)
+	for data, target in test_loader0:
+
+		data, target = data.to(device), target.to(device)
 		X, y = Variable(data), Variable(target)
 
 		lc = [n for n in range(idx, idx + X.shape[0])]
 		idx = idx + X.shape[0]
 
 		if args.mode == 2:
-			data1, target1 = test_loader1.dataset[i][0].to(device), test_loader1.dataset[i][1].to(device)
+			data1, target1 = next(iter1)
+			data1, target1 = data1.to(device), target1.to(device)
 			X1, y1 = Variable(data1), Variable(target1)
 			X = X1
 
@@ -172,7 +171,8 @@ def rep(model1, model2, model1og, model2og, device, test_loader0, test_loader1, 
 		match_idx.extend(lc)
 
 		if args.mode == 2:
-			data2, target2 = test_loader2.dataset[i][0].to(device), test_loader2.dataset[i][1].to(device)
+			data2, target2 = next(iter2)
+			data2, target2 = data2.to(device), target2.to(device)
 			X2, y2 = Variable(data2), Variable(target2)
 			X = X2
 
@@ -223,8 +223,8 @@ def main():
 	#initilaize model 2 (current model)
 	model2 = resnet101()
 	model2.fc = nn.Linear(2048, 43)
-	#model2.load_state_dict(torch.load(args.model_path_cur))
-	model2.load_state_dict(torch.load(args.model_path_bm))
+	model2.load_state_dict(torch.load(args.model_path_cur))
+	#model2.load_state_dict(torch.load(args.model_path_bm))
 	model2 = model2.to(device)
 
 	backbone2 = FeatureExtractor(model2)
@@ -256,16 +256,16 @@ def main():
 		test_loader2 = torch.utils.data.DataLoader(testset2, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 		if args.mode == 1 or args.mode == 2:
-			features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, model1, model2, device, test_loader0, test_loader1, test_loader1)
+			features, predictions, targets, adv_class, match_idx = rep(model_1, model_2, model1, model2, device, test_loader0, test_loader1, test_loader2)
 		elif args.mode == 3:
-			features, predictions, targets, adv_class, match_idx = rep2(model_1, model1, device, test_loader0)
+			features, predictions, targets, adv_class, match_idx = rep2(model_1, model1, device, test_loader0, test_loader1)
 		elif args.mode == 4:
-			features, predictions, targets, adv_class, match_idx = rep2(model_2, model2, device, test_loader0)
+			features, predictions, targets, adv_class, match_idx = rep2(model_2, model2, device, test_loader0, test_loader2)
 
 		tx, ty = dimen_reduc(features, len(testset0))
 
 		#convert to tabular data
-		path = "./tabu_data0/" + str(i) + "/"
+		path = "./tabu_data1/" + str(i) + "/"
 		if not os.path.exists(path):
 			os.makedirs(path)
 		
