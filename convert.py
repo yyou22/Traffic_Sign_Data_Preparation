@@ -5,11 +5,11 @@ import os
 
 def main():
 
-	path = "./Images_1_ppm/"
+	path = "./Images_2_ppm/"
 	if not os.path.exists(path):
 		os.makedirs(path)
 
-	images = np.load('X_pgd_1.npy')
+	images = np.load('X_pgd_2.npy')
 
 	num = np.shape(images)[0]
 

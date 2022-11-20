@@ -22,7 +22,7 @@ parser.add_argument('--model-path-bm',
                     default='./checkpoints/model_gtsrb_rn_nat.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--model-path-cur',
-                    default='./checkpoints/model_gtsrb_rn_adv1.pt',
+                    default='./checkpoints/model_gtsrb_rn_adv2.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
@@ -249,7 +249,7 @@ def main():
 		test_loader1 = torch.utils.data.DataLoader(testset1, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 		testset2 = GTSRB_Test_Sub(
-				    root_dir='/content/data/Images_1_ppm/',
+				    root_dir='/content/data/Images_2_ppm/',
 				    class_ = i,
 				    transform=transform_test)
 
@@ -265,7 +265,7 @@ def main():
 		tx, ty = dimen_reduc(features, len(testset0))
 
 		#convert to tabular data
-		path = "./tabu_data1/" + str(i) + "/"
+		path = "./tabu_data2/" + str(i) + "/"
 		if not os.path.exists(path):
 			os.makedirs(path)
 		
