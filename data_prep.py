@@ -37,8 +37,13 @@ transform_test = transforms.Compose([
 	transforms.ToTensor(),
 ])
 
+#testset = GTSRB_Test(
+    #root_dir='/content/data/GTSRB-Test/Final_Test/Images/',
+    #transform=transform_test
+#)
+
 testset = GTSRB_Test(
-    root_dir='/content/data/GTSRB-Test/Final_Test/Images/',
+    root_dir='/content/data/Images_1_ppm',
     transform=transform_test
 )
 
