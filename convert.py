@@ -5,7 +5,7 @@ import os
 
 def main():
 
-	path = "./Images_2_ppm/"
+	path = "./Images_2/"
 	if not os.path.exists(path):
 		os.makedirs(path)
 
@@ -24,7 +24,7 @@ def main():
 		s1 = f'{i:05d}'
 
 		img_ = Image.fromarray(img, 'RGB')
-		img_.save(path + s1 + '.ppm')
+		img_.save(path + s1 + '.jpg')
 
 		#x = np.shape(img)[0]
 		#y = np.shape(img)[1]
