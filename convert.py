@@ -5,11 +5,11 @@ import os
 
 def main():
 
-	path = "./Images_2/"
+	path = "./Images_resize/"
 	if not os.path.exists(path):
 		os.makedirs(path)
 
-	images = np.load('X_pgd_2.npy')
+	images = np.load('X.npy')
 
 	num = np.shape(images)[0]
 

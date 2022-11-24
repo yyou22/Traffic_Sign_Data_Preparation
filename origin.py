@@ -25,17 +25,6 @@ parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--mode', default=1,
-                    help='define whcih subcanvas')
-parser.add_argument('--epsilon', default=0.031,
-                    help='perturbation')
-parser.add_argument('--num-steps', default=20,
-                    help='perturb number of steps')
-parser.add_argument('--step-size', default=0.003,
-                    help='perturb step size')
-parser.add_argument('--random',
-                    default=True,
-                    help='random initialization for PGD')
 
 args = parser.parse_args()
 
@@ -61,38 +50,30 @@ n_class = 43
 
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-def attack(model, device, test_loader):
+def attack(device, test_loader):
 
-    model.eval()
-
-    attack_imgs = []
+    imgs = []
 
     for data,target in test_loader:
         data, target = data.to(device), target.to(device)
         X, y = Variable(data), Variable(target)
 
-        attack_imgs.extend(X.cpu().detach().numpy())
+        imgs.extend(X.cpu().detach().numpy())
 
     #convert to numpy arrays
-    attack_imgs = np.array(attack_imgs)
+    imgs = np.array(imgs)
 
-    return attack_imgs
+    return imgs
 
 def main():
-
-    #initialize model attacked
-    model = resnet101()
-    model.fc = nn.Linear(2048, 43)
-    model.load_state_dict(torch.load(args.model_path_cur))
-    model = model.to(device)
 
     #convert to tabular data
     path = "./original_data/"
     if not os.path.exists(path):
         os.makedirs(path)
 
-    attack_imgs = attack(model, device, test_loader)
-    np.save(path + "X", attack_imgs)
+    imgs = attack(device, test_loader)
+    np.save(path + "X", imgs)
     
 if __name__ == '__main__':
     main()
