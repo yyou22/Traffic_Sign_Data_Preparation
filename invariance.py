@@ -12,24 +12,20 @@ from torch.autograd import Variable
 from torchvision.models import resnet101, ResNet101_Weights
 import numpy as np
 from torch.utils.data import Subset, DataLoader
+import csv
 
 from GTSRB import GTSRB_Test
 from GTSRB_sub import GTSRB_Test_Sub
 from feature_extractor import FeatureExtractor
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
-parser.add_argument('--model-path-bm',
-                    default='./checkpoints/model_gtsrb_rn_nat.pt',
-                    help='model for white-box attack evaluation')
-parser.add_argument('--model-path-cur',
-                    default='./checkpoints/model_gtsrb_rn_nat.pt',
+parser.add_argument('--model-path',
+                    default='./checkpoints/model_gtsrb_rn_adv6.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
-                    help='input batch size for testing (default: 200)')
+                    help='input batch size for testing (default: 64)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--mode', default=4,
-                    help='define whcih subcanvas')
 
 args = parser.parse_args()
 
@@ -51,7 +47,7 @@ testset0 = GTSRB_Test(
 test_loader0 = torch.utils.data.DataLoader(testset0, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 testset1 = GTSRB_Test(
-			    root_dir='/content/data/Images_0_ppm/',
+			    root_dir='/content/data/Images_2_ppm/',
 			    transform=transform_test)
 
 test_loader1 = torch.utils.data.DataLoader(testset1, batch_size=args.test_batch_size, shuffle=False, **kwargs)
@@ -61,7 +57,7 @@ def inv(backbone, device, testloader0, testloader1):
 	backbone.eval()
 
 	inv_total = 0
-	num_instance = len(testset0)
+	num_instance = len(testloader0)
 
 	iter1 = iter(test_loader1)
 
@@ -81,6 +77,8 @@ def inv(backbone, device, testloader0, testloader1):
 
 		inv_total += repr_loss
 
+	inv_total = inv_total.cpu().detach().numpy()
+
 	return inv_total/num_instance
 
 def main():
@@ -88,7 +86,7 @@ def main():
 	#initialize model
 	model = resnet101()
 	model.fc = nn.Linear(2048, 43)
-	model.load_state_dict(torch.load(args.model_path_bm))
+	model.load_state_dict(torch.load(args.model_path))
 	model = model.to(device)
 
 	backbone = FeatureExtractor(model)
@@ -96,9 +94,10 @@ def main():
 
 	avg_inv = inv(backbone, device, test_loader0, test_loader1)
 
-	file = open('inv.csv','w')
+	#file = open('inv.csv','w')
+	file = open('inv.csv','a')
 	writer = csv.writer(file)
-	writer.writerow(['inv'])
+	#writer.writerow(['inv'])
 	writer.writerow([avg_inv])
 
 if __name__ == '__main__':

@@ -2,8 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import os
+import pandas as pd
 
-def main():
+def convert_img():
 
 	path = "./Images_resize/"
 	if not os.path.exists(path):
@@ -35,6 +36,17 @@ def main():
 		#s1 = f'{i:05d}'
 
 		#plt.savefig(s1 + '.jpg')
+
+def combine_csv():
+
+	a = pd.read_csv("inv.csv")
+	b = pd.read_csv("summary.csv")
+	merged = pd.concat((b, a),axis=1)
+	merged.to_csv("output.csv", index=False)
+
+def main():
+	#convert_img()
+	combine_csv()
 
 if __name__ == '__main__':
 	main()
