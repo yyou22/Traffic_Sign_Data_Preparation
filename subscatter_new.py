@@ -22,13 +22,13 @@ parser.add_argument('--model-path-bm',
                     default='./checkpoints/model_gtsrb_rn_nat.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--model-path-cur',
-                    default='./checkpoints/model_gtsrb_rn_adv2.pt',
+                    default='./checkpoints/model_gtsrb_rn_adv6.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--mode', default=1,
+parser.add_argument('--mode', default=4,
                     help='define whcih subcanvas')
 
 args = parser.parse_args()

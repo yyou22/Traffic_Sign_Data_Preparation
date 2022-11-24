@@ -19,7 +19,7 @@ from feature_extractor import FeatureExtractor
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
 parser.add_argument('--model-path-cur',
-                    default='./checkpoints/model_gtsrb_rn_adv1.pt',
+                    default='./checkpoints/model_gtsrb_rn_adv6.pt',
                     help='model for white-box attack evaluation')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
@@ -53,7 +53,7 @@ transform_test = transforms.Compose([
 ])
 
 testset = GTSRB_Test(
-    root_dir='/content/data/GTSRB-Test/Final_Test/Images/',
+    root_dir='/content/data/GTSRB/Final_Test/Images/',
     transform=transform_test
 )
 
@@ -127,7 +127,7 @@ def main():
         os.makedirs(path)
 
     attack_imgs = attack(model, device, test_loader)
-    np.save(path + "X_pgd_0", attack_imgs)
+    np.save(path + "X_pgd_2", attack_imgs)
     
 if __name__ == '__main__':
     main()
