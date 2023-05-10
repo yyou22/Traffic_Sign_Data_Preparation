@@ -47,7 +47,9 @@ testset_adv = GTSRB_Test(
     transform=transform_test
 )
 
-test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+test_loader_nat = torch.utils.data.DataLoader(testset_nat, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
+test_loader_adv = torch.utils.data.DataLoader(testset_adv, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 def TSNE_(data):
 
@@ -112,7 +114,7 @@ def rep(model, device, test_loader_nat, test_loader_adv):
 		#push representation to the list
 		features.extend(feat.cpu().detach().numpy())
 
-	type_.extend([0] * adv_total)
+	type_.extend([1] * adv_total)
 
 	print("Adversarial Prediction Accuracy:" + str(adv_accu/adv_total))
 	
@@ -120,8 +122,9 @@ def rep(model, device, test_loader_nat, test_loader_adv):
 	targets = np.array(targets)
 	predictions = np.array(predictions)
 	features = np.array(features)
+	type_ = np.array(type_)
 
-	return features, predictions, targets
+	return features, predictions, targets, type_
 
 def dimen_reduc(features):
 	
@@ -149,7 +152,7 @@ def main():
 
 	model_ = nn.Sequential(backbone, fc)
 
-	features, predictions, targets = rep(model_, device, test_loader)
+	features, predictions, targets, type_ = rep(model_, device, test_loader_nat, test_loader_adv)
 
 	tx, ty = dimen_reduc(features)
 
@@ -161,9 +164,9 @@ def main():
 	predictions = predictions.reshape(predictions.shape[0], 1)
 	targets = targets.reshape(targets.shape[0], 1)
 
-	result = np.concatenate((tx, ty, predictions, targets), axis=1)
-	type_ = ['%.5f'] * 2 + ['%d'] * 2
-	np.savetxt(path + "data_2_adv.csv", result, header="xpos,ypos,pred,target", comments='', delimiter=',', fmt=type_)
+	result = np.concatenate((tx, ty, predictions, targets, type_), axis=1)
+	type_ = ['%.5f'] * 2 + ['%d'] * 3
+	np.savetxt(path + "data_2_all.csv", result, header="xpos,ypos,pred,target,type", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
