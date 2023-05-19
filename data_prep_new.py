@@ -45,13 +45,6 @@ testset_nat = GTSRB_Test(
 
 test_loader_nat = torch.utils.data.DataLoader(testset_nat, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-def TSNE_(data):
-
-	tsne = TSNE(n_components=2)
-	data = tsne.fit_transform(data)
-
-	return data
-
 def rep(model, device, test_loader_nat, test_loader_adv):
 	model.eval()
 
@@ -130,6 +123,30 @@ def dimen_reduc(features):
 
 	return tx, ty
 
+def TSNE_(data):
+
+	tsne = TSNE(n_components=2)
+	data = tsne.fit_transform(data)
+
+	return data
+
+def dimen_reduc_cpca(background_data, target_data):
+	
+	feature_t = CPCA_(background_data, target_data)
+
+	tx, ty = feature_t[:, 0].reshape(12630*2, 1), feature_t[:, 1].reshape(12630*2, 1)
+	tx = (tx-np.min(tx)) / (np.max(tx) - np.min(tx))
+	ty = (ty-np.min(ty)) / (np.max(ty) - np.min(ty))
+
+	return tx, ty
+
+def cPCA_(background_data, target_data):
+
+	cpca = CPCA()
+	data = cpca.fit_transform(background_data, target_data)
+
+	return data
+
 def main():
 
 	testset_adv = GTSRB_Test(
@@ -164,7 +181,8 @@ def main():
 
 	features, predictions, targets, type_ = rep(model_, device, test_loader_nat, test_loader_adv)
 
-	tx, ty = dimen_reduc(features)
+	#tx, ty = dimen_reduc(features)
+	tx, ty = dimen_reduc_cpca(features[:len(features)//2], features[len(features)//2:])
 
 	#convert to tabular data
 	path = "./tabu_data/"

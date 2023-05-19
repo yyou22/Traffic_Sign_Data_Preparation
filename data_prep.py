@@ -10,6 +10,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 from torchvision.models import resnet101, ResNet101_Weights
+from contrastive import CPCA
 import numpy as np
 
 from GTSRB import GTSRB_Test
@@ -56,6 +57,16 @@ def TSNE_(data):
 
 	return data
 
+def dimen_reduc(features):
+	
+	feature_t = TSNE_(features)
+
+	tx, ty = feature_t[:, 0].reshape(12630, 1), feature_t[:, 1].reshape(12630, 1)
+	tx = (tx-np.min(tx)) / (np.max(tx) - np.min(tx))
+	ty = (ty-np.min(ty)) / (np.max(ty) - np.min(ty))
+
+	return tx, ty
+
 def rep(model, device, test_loader):
 	model.eval()
 
@@ -95,15 +106,22 @@ def rep(model, device, test_loader):
 
 	return features, predictions, targets
 
-def dimen_reduc(features):
+def dimen_reduc_cpca(background_data, target_data):
 	
-	feature_t = TSNE_(features)
+	feature_t = CPCA_(background_data, target_data)
 
 	tx, ty = feature_t[:, 0].reshape(12630, 1), feature_t[:, 1].reshape(12630, 1)
 	tx = (tx-np.min(tx)) / (np.max(tx) - np.min(tx))
 	ty = (ty-np.min(ty)) / (np.max(ty) - np.min(ty))
 
 	return tx, ty
+
+def cPCA_(background_data, target_data):
+
+	cpca = CPCA()
+	data = cpca.fit_transform(background_data, target_data)
+
+	return data
 
 def main():
 	#initialize model
@@ -123,7 +141,8 @@ def main():
 
 	features, predictions, targets = rep(model_, device, test_loader)
 
-	tx, ty = dimen_reduc(features)
+	#tx, ty = dimen_reduc(features)
+	tx, ty = dimen_reduc_cpca(features[:len(features)//2], features[len(features)//2:])
 
 	#convert to tabular data
 	path = "./tabu_data/"
