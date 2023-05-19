@@ -45,8 +45,6 @@ testset_nat = GTSRB_Test(
 
 test_loader_nat = torch.utils.data.DataLoader(testset_nat, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-test_loader_adv = torch.utils.data.DataLoader(testset_adv, batch_size=args.test_batch_size, shuffle=False, **kwargs)
-
 def TSNE_(data):
 
 	tsne = TSNE(n_components=2)
@@ -135,9 +133,11 @@ def dimen_reduc(features):
 def main():
 
 	testset_adv = GTSRB_Test(
-		root_dir='/content/data/Images_' + args.model_num + '_ppm',
+		root_dir='/content/data/Images_' + str(args.model_num) + '_ppm',
 		transform=transform_test
 	)
+
+	test_loader_adv = torch.utils.data.DataLoader(testset_adv, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 	#initialize model
 	model = resnet101()
