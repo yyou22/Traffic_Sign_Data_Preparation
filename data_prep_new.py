@@ -16,9 +16,10 @@ from GTSRB import GTSRB_Test
 from feature_extractor import FeatureExtractor
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
-parser.add_argument('--model-path',
-                    default='./checkpoints/model_gtsrb_rn_adv6.pt',
-                    help='model for white-box attack evaluation')
+#parser.add_argument('--model-path',
+                    #default='./checkpoints/model_gtsrb_rn_adv6.pt',
+                    #help='model for white-box attack evaluation')
+parser.add_argument('--model-num', type=int, default=0, help='which model checkpoint to use')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -39,11 +40,6 @@ transform_test = transforms.Compose([
 
 testset_nat = GTSRB_Test(
     root_dir='/content/data/GTSRB/Final_Test/Images/',
-    transform=transform_test
-)
-
-testset_adv = GTSRB_Test(
-    root_dir='/content/data/Images_2_ppm',
     transform=transform_test
 )
 
@@ -137,10 +133,24 @@ def dimen_reduc(features):
 	return tx, ty
 
 def main():
+
+	testset_adv = GTSRB_Test(
+		root_dir='/content/data/Images_' + args.model_num + '_ppm',
+		transform=transform_test
+	)
+
 	#initialize model
 	model = resnet101()
 	model.fc = nn.Linear(2048, 43)
-	model.load_state_dict(torch.load(args.model_path))
+
+	if args.model_num == 0:
+		model_path = './checkpoints/model_gtsrb_rn_nat.pt'
+	elif args.model_num == 1:
+		model_path = './checkpoints/model_gtsrb_rn_adv1.pt'
+	else:
+		model_path = './checkpoints/model_gtsrb_rn_adv6.pt'
+
+	model.load_state_dict(torch.load(model_path))
 	model = model.to(device)
 
 	#print(model.state_dict().keys())
@@ -163,10 +173,11 @@ def main():
 	
 	predictions = predictions.reshape(predictions.shape[0], 1)
 	targets = targets.reshape(targets.shape[0], 1)
+	type_ = type_.reshape(type_.shape[0], 1)
 
 	result = np.concatenate((tx, ty, predictions, targets, type_), axis=1)
 	type_ = ['%.5f'] * 2 + ['%d'] * 3
-	np.savetxt(path + "data_2_all.csv", result, header="xpos,ypos,pred,target,type", comments='', delimiter=',', fmt=type_)
+	np.savetxt(path + "data_" + args.model_num + "_all.csv", result, header="xpos,ypos,pred,target,type", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
