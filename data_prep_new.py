@@ -177,7 +177,7 @@ def main():
 
 	result = np.concatenate((tx, ty, predictions, targets, type_), axis=1)
 	type_ = ['%.5f'] * 2 + ['%d'] * 3
-	np.savetxt(path + "data_" + args.model_num + "_all.csv", result, header="xpos,ypos,pred,target,type", comments='', delimiter=',', fmt=type_)
+	np.savetxt(path + "data_" + str(args.model_num) + "_all.csv", result, header="xpos,ypos,pred,target,type", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
