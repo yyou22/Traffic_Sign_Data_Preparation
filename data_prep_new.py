@@ -10,20 +10,22 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 from torchvision.models import resnet101, ResNet101_Weights
+from contrastive import CPCA
 import numpy as np
+from ccpca import CCPCA
 
 from GTSRB import GTSRB_Test
 from feature_extractor import FeatureExtractor
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
 #parser.add_argument('--model-path',
-                    #default='./checkpoints/model_gtsrb_rn_adv6.pt',
-                    #help='model for white-box attack evaluation')
+					#default='./checkpoints/model_gtsrb_rn_adv6.pt',
+					#help='model for white-box attack evaluation')
 parser.add_argument('--model-num', type=int, default=0, help='which model checkpoint to use')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
-                    help='input batch size for testing (default: 200)')
+					help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='disables CUDA training')
+					help='disables CUDA training')
 
 args = parser.parse_args()
 
@@ -39,8 +41,8 @@ transform_test = transforms.Compose([
 ])
 
 testset_nat = GTSRB_Test(
-    root_dir='/content/data/GTSRB/Final_Test/Images/',
-    transform=transform_test
+	root_dir='/content/data/GTSRB/Final_Test/Images/',
+	transform=transform_test
 )
 
 test_loader_nat = torch.utils.data.DataLoader(testset_nat, batch_size=args.test_batch_size, shuffle=False, **kwargs)
@@ -130,22 +132,17 @@ def TSNE_(data):
 
 	return data
 
-def dimen_reduc_cpca(background_data, target_data):
+def dimen_reduc_cpca(features):
+
+	half_length = features.shape[0] // 2
+    data_back = features[:half_length]
+    data_fore = features[half_length:]
 	
-	feature_t = CPCA_(background_data, target_data)
+	ccpca = CCPCA(n_components=2)
+	ccpca.fit(data_back, data_fore, var_thres_ratio=0.5, n_alphas=40, max_log_alpha=0.5)
+	ccpca_result = ccpca.transform(features)
 
-	tx, ty = feature_t[:, 0].reshape(12630*2, 1), feature_t[:, 1].reshape(12630*2, 1)
-	tx = (tx-np.min(tx)) / (np.max(tx) - np.min(tx))
-	ty = (ty-np.min(ty)) / (np.max(ty) - np.min(ty))
-
-	return tx, ty
-
-def cPCA_(background_data, target_data):
-
-	cpca = CPCA()
-	data = cpca.fit_transform(background_data, target_data)
-
-	return data
+	print(ccpca_result)
 
 def main():
 
@@ -182,7 +179,7 @@ def main():
 	features, predictions, targets, type_ = rep(model_, device, test_loader_nat, test_loader_adv)
 
 	#tx, ty = dimen_reduc(features)
-	tx, ty = dimen_reduc_cpca(features[:len(features)//2], features[len(features)//2:])
+	dimen_reduc_cpca(data_back, data_fore):
 
 	#convert to tabular data
 	path = "./tabu_data/"
@@ -195,7 +192,7 @@ def main():
 
 	result = np.concatenate((tx, ty, predictions, targets, type_), axis=1)
 	type_ = ['%.5f'] * 2 + ['%d'] * 3
-	np.savetxt(path + "data_" + str(args.model_num) + "_all.csv", result, header="xpos,ypos,pred,target,type", comments='', delimiter=',', fmt=type_)
+	np.savetxt(path + "data_" + str(args.model_num) + "_all_.csv", result, header="xpos,ypos,pred,target,type", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
