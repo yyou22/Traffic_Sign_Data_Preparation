@@ -24,7 +24,7 @@ class GTSRB_Test_Sub(Dataset):
 
         self.csv_data = pd.read_csv(csv_file_path, sep=';', usecols=["Filename", "ClassId"])
 
-        self.original_indexes = self.filtered_csv_data.index.tolist()
+        self.original_indexes = self.csv_data.index.tolist()
 
         self.csv_data = self.csv_data[self.csv_data['ClassId']==class_]
 
