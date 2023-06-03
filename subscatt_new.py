@@ -23,7 +23,7 @@ parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
                     help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--mode', default=1,
+parser.add_argument('--mode', default=0,
                     help='define whcih subcanvas')
 
 args = parser.parse_args()

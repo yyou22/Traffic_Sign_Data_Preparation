@@ -10,7 +10,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 from torchvision.models import resnet101, ResNet101_Weights
-from contrastive import CPCA
+#from contrastive import CPCA
 import numpy as np
 from ccpca import CCPCA
 
@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign 
 #parser.add_argument('--model-path',
 					#default='./checkpoints/model_gtsrb_rn_adv6.pt',
 					#help='model for white-box attack evaluation')
-parser.add_argument('--model-num', type=int, default=0, help='which model checkpoint to use')
+parser.add_argument('--model-num', type=int, default=1, help='which model checkpoint to use')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
 					help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -135,14 +135,22 @@ def TSNE_(data):
 def dimen_reduc_cpca(features):
 
 	half_length = features.shape[0] // 2
-    data_back = features[:half_length]
-    data_fore = features[half_length:]
+	data_back = features[:half_length]
+	data_fore = features[half_length:]
 	
 	ccpca = CCPCA(n_components=2)
-	ccpca.fit(data_back, data_fore, var_thres_ratio=0.5, n_alphas=40, max_log_alpha=0.5)
+	ccpca.fit(data_fore, data_back, var_thres_ratio=0.5, n_alphas=40, max_log_alpha=0.5)
 	ccpca_result = ccpca.transform(features)
 
-	print(ccpca_result)
+	feature_t = ccpca_result
+
+	print(half_length)
+
+	tx, ty = feature_t[:, 0].reshape(half_length*2, 1), feature_t[:, 1].reshape(half_length*2, 1)
+	tx = (tx-np.min(tx)) / (np.max(tx) - np.min(tx))
+	ty = (ty-np.min(ty)) / (np.max(ty) - np.min(ty))
+
+	return tx, ty
 
 def main():
 
@@ -178,8 +186,15 @@ def main():
 
 	features, predictions, targets, type_ = rep(model_, device, test_loader_nat, test_loader_adv)
 
+	indices = np.where(targets == 0)[0]
+	print(indices)
+	print(len(indices))
+
+	# Get the subset of data instances with the target label
+	filtered_data = features[indices]
+
 	#tx, ty = dimen_reduc(features)
-	dimen_reduc_cpca(data_back, data_fore):
+	tx, ty = dimen_reduc_cpca(filtered_data)
 
 	#convert to tabular data
 	path = "./tabu_data/"
@@ -190,9 +205,14 @@ def main():
 	targets = targets.reshape(targets.shape[0], 1)
 	type_ = type_.reshape(type_.shape[0], 1)
 
+	#only for one class
+	predictions = predictions[indices]
+	targets = targets[indices]
+	type_ = type_[indices]
+
 	result = np.concatenate((tx, ty, predictions, targets, type_), axis=1)
 	type_ = ['%.5f'] * 2 + ['%d'] * 3
-	np.savetxt(path + "data_" + str(args.model_num) + "_all_.csv", result, header="xpos,ypos,pred,target,type", comments='', delimiter=',', fmt=type_)
+	np.savetxt(path + "data_" + str(args.model_num) + "_cpca_0.csv", result, header="xpos,ypos,pred,target,type", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
