@@ -120,8 +120,9 @@ def rep2(model, device, test_loader0, test_loader1):
 	features = np.array(features)
 	adv_class = np.array(adv_class)
 	match_idx = np.array(match_idx)
+	og_dices = np.array(og_dices)
 
-	return features, predictions, targets, adv_class, match_idx 
+	return features, predictions, targets, adv_class, match_idx, og_dices
 
 def dimen_reduc(features, num_data):
 	
@@ -169,7 +170,7 @@ def main():
 
 		test_loader2 = torch.utils.data.DataLoader(testset2, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-		features, predictions, targets, adv_class, match_idx = rep2(model_1, device, test_loader0, test_loader2)
+		features, predictions, targets, adv_class, match_idx, og_dices = rep2(model_1, device, test_loader0, test_loader2)
 
 		tx, ty = dimen_reduc(features, len(testset0))
 
@@ -182,14 +183,17 @@ def main():
 		targets = targets.reshape(targets.shape[0], 1)
 		adv_class = adv_class.reshape(adv_class.shape[0], 1)
 		match_idx = match_idx.reshape(match_idx.shape[0], 1)
+		og_dices = og_dices.reshape(og_dices.shape[0], 1)
 
-		result = np.concatenate((tx, ty, predictions, targets, adv_class, match_idx), axis=1)
-		type_ = ['%.5f'] * 2 + ['%d'] * 4
+		print(og_dices)
+
+		result = np.concatenate((tx, ty, predictions, targets, adv_class, match_idx, og_dices), axis=1)
+		type_ = ['%.5f'] * 2 + ['%d'] * 5
 		
 		if args.mode == 0:
-			np.savetxt(path + "data_label.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
+			np.savetxt(path + "data_label.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx,og_idx", comments='', delimiter=',', fmt=type_)
 		elif args.mode == 1:
-			np.savetxt(path + "data_pred.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx", comments='', delimiter=',', fmt=type_)
+			np.savetxt(path + "data_pred.csv", result, header="xpos,ypos,pred,target,cur_model,match_idx,og_idx", comments='', delimiter=',', fmt=type_)
 
 if __name__ == '__main__':
 	main()
