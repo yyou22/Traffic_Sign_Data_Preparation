@@ -22,7 +22,7 @@ class GTSRB_Test_Sub(Dataset):
         csv_file_path = os.path.join(
             self.root_dir, self.csv_file_name)
 
-        self.csv_data = pd.read_csv(csv_file_path, sep=';', usecols=["Filename", "ClassId"])
+        csv_data = pd.read_csv(csv_file_path, sep=';', usecols=["Filename", "ClassId"])
 
         self.csv_data = csv_data[csv_data['ClassId']==class_]
         self.original_indexes = self.csv_data.index.tolist()
