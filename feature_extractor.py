@@ -1,3 +1,7 @@
+import torch
+import torch.nn as nn
+import torchvision.models as models
+
 class FeatureExtractor(nn.Module):
     def __init__(self, model):
         super(FeatureExtractor, self).__init__()
