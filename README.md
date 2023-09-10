@@ -1,6 +1,6 @@
 # Preparing Data
 
-For this to work, you need to use GTSRB Data Preop.ipynb
+For this to work, you need to use GTSRB Data Prep.ipynb
 
 You need to first unzip all the data you need
 
