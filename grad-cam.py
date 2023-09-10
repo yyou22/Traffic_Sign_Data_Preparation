@@ -91,10 +91,10 @@ def rep(model, device, test_loader):
 		max_indices = pred.argmax(dim=1)
 		pred_max = pred[range(pred.shape[0]), max_indices]
 		pred_max.sum().backward()
-		
+
 		gradients = model[0].get_activations_gradient()
 		pooled_gradients = torch.mean(gradients, dim=[0, 2, 3])
-		activations = model[0].get_activations(X).detach()
+		activations = model[0].get_activations().detach()
 
 		for i in range(activations.shape[1]):
 			activations[:, i, :, :] *= pooled_gradients[i]
