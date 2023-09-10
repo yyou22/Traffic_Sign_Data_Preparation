@@ -29,3 +29,7 @@ These are the labels of the image data.
 # Generate Noise
 
 `noise_generation.py` reads all images from folders Images_resize (clean images) and Images_0, Images_1, and Images_2 (adversarial images) [backed up on google drive] to subtract them to visualize the perturbations. Need to manually replace the file names in the script to visualize the noise for specific models.
+
+# Checkpoints
+
+There are three checkpoints for the GTSRB dataset, including model_gtsrb_rn_adv1.pt, model_gtsrb_rn_adv6.pt, and model_gtsrb_rn_nat.pt, all saved within the checkpoints folder on drive.
