@@ -88,7 +88,10 @@ def rep(model, device, test_loader):
 		features.extend(feat.cpu().detach().numpy())
 
 		# Grad-CAM visualization for all images in the batch
-		pred[:, pred.argmax(dim=1)].backward()
+		max_indices = pred.argmax(dim=1)
+		pred_max = pred[range(pred.shape[0]), max_indices]
+		pred_max.sum().backward()
+		
 		gradients = model[0].get_activations_gradient()
 		pooled_gradients = torch.mean(gradients, dim=[0, 2, 3])
 		activations = model[0].get_activations(X).detach()
