@@ -51,8 +51,9 @@ testset = GTSRB_Test(
 	#transform=transform_test
 #)
 
-if not os.path.exists('./grad-cam'):
-	os.makedirs('./grad-cam')
+#model-dataset
+if not os.path.exists('./grad-cam/0-0'):
+	os.makedirs('./grad-cam/0-0')
 
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 

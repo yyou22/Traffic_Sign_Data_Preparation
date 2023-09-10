@@ -1,6 +1,3 @@
-import torch
-import torch.nn as nn
-
 class FeatureExtractor(nn.Module):
     def __init__(self, model):
         super(FeatureExtractor, self).__init__()
@@ -12,8 +9,8 @@ class FeatureExtractor(nn.Module):
         # Register hooks for Grad-CAM
         self.gradients = None
         self.activations = None
-        self.features[-1][-1].register_forward_hook(self.save_activations)
-        self.features[-1][-1].register_backward_hook(self.save_gradients)
+        self.net.layer4[-1].register_forward_hook(self.save_activations)
+        self.net.layer4[-1].register_backward_hook(self.save_gradients)
         
     def save_activations(self, module, input, output):
         self.activations = output
