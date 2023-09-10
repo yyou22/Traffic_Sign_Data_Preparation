@@ -26,8 +26,8 @@ from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
 parser.add_argument('--model-path',
-					default='./checkpoints/model_gtsrb_rn_adv6.pt',
-					help='model for white-box attack evaluation')
+					default='./checkpoints/model_gtsrb_rn_nat.pt',
+					help='model for white-box attack evaluation') #nat, adv1, adv6
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
 					help='input batch size for testing (default: 200)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -58,8 +58,8 @@ testset = GTSRB_Test(
 
 
 #model-dataset
-if not os.path.exists('./grad-cam/2-0'):
-	os.makedirs('./grad-cam/2-0')
+if not os.path.exists('./grad-cam_/0-0'):
+	os.makedirs('./grad-cam_/0-0')
 
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
@@ -96,16 +96,14 @@ def rep(model, device, test_loader, cam):
 		features.extend(feat.cpu().detach().numpy())
 
 		# New Grad-CAM code starts here
-		cam_targets = pred.data.max(1)[1].cpu().numpy()  # Get the class indices
-		grayscale_cam = cam(input_tensor=data, target_category=cam_targets)
+		#cam_targets = pred.data.max(1)[1].cpu().numpy()  # Get the class indices
+		grayscale_cam = cam(input_tensor=X, targets=None)
 
 		for j in range(grayscale_cam.shape[0]):
 			visualization = show_cam_on_image(data.cpu().numpy()[j].transpose(1, 2, 0), grayscale_cam[j, :])
 
+			cv2.imwrite(f'./grad-cam_/0-0/gradcam_img{counter}_label{str(y.cpu().numpy()[j])}.jpg', visualization)
 			counter += 1
-			cv2.imwrite(f'./grad-cam/2-0/gradcam_img{counter}_label{str(y.cpu().numpy()[j])}.jpg', visualization)
-
-		break
 	
 	#convert to numpy arrays
 	targets = np.array(targets)
