@@ -21,7 +21,7 @@ from torch.autograd import Function
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
 parser.add_argument('--model-path',
-					default='./checkpoints/model_gtsrb_rn_nat.pt',
+					default='./checkpoints/model_gtsrb_rn_adv6.pt',
 					help='model for white-box attack evaluation')
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
 					help='input batch size for testing (default: 200)')
@@ -52,8 +52,8 @@ testset = GTSRB_Test(
 #)
 
 #model-dataset
-if not os.path.exists('./grad-cam/0-0'):
-	os.makedirs('./grad-cam/0-0')
+if not os.path.exists('./grad-cam/2-0'):
+	os.makedirs('./grad-cam/2-0')
 
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
@@ -69,6 +69,8 @@ def rep(model, device, test_loader):
 
 	accu = 0
 	total = 0
+
+	counter = 0
 
 	for batch_idx, (data, target) in enumerate(test_loader):
 		data, target = data.to(device), target.to(device)
@@ -114,7 +116,10 @@ def rep(model, device, test_loader):
 			heatmap = np.uint8(255 * heatmap)
 			heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
 			superimposed_img = heatmap * 0.4 + img
-			cv2.imwrite(f'./grad-cam/gradcam_batch{batch_idx}_img{j}_label{str(y.cpu().numpy()[j])}.jpg', superimposed_img)
+
+			counter++
+
+			cv2.imwrite(f'./grad-cam/2-0/gradcam_img{counter}_label{str(y.cpu().numpy()[j])}.jpg', superimposed_img)
 	
 	#convert to numpy arrays
 	targets = np.array(targets)
