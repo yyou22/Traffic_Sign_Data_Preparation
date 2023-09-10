@@ -117,7 +117,7 @@ def rep(model, device, test_loader):
 			heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
 			superimposed_img = heatmap * 0.4 + img
 
-			counter++
+			counter += 1
 
 			cv2.imwrite(f'./grad-cam/2-0/gradcam_img{counter}_label{str(y.cpu().numpy()[j])}.jpg', superimposed_img)
 	
