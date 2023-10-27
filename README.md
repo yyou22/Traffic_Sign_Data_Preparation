@@ -33,3 +33,6 @@ These are the labels of the image data.
 # Checkpoints
 
 There are three checkpoints for the GTSRB dataset, including model_gtsrb_rn_adv1.pt, model_gtsrb_rn_adv6.pt, and model_gtsrb_rn_nat.pt, all saved within the checkpoints folder on drive.
+
+# Grad CAM
+`grad-cam-og.py` is the original grad cam script that is implemented from scratch and is not the most ideal. `grad-cam.py` utilizes an existing library for CAM and overlay the heat map on each image.

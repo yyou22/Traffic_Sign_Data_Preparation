@@ -19,14 +19,14 @@ from feature_extractor import FeatureExtractor
 import cv2
 from torch.autograd import Function
 
-from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam import GradCAM, HiResCAM, EigenGradCAM, ScoreCAM, GradCAMPlusPlus, XGradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 
 parser = argparse.ArgumentParser(description='Data Preparation for Traffic Sign Project')
 parser.add_argument('--model-path',
-					default='./checkpoints/model_gtsrb_rn_nat.pt',
+					default='./checkpoints/model_gtsrb_rn_adv6.pt',
 					help='model for white-box attack evaluation') #nat, adv1, adv6
 parser.add_argument('--test-batch-size', type=int, default=64, metavar='N',
 					help='input batch size for testing (default: 200)')
@@ -52,14 +52,14 @@ testset = GTSRB_Test(
 )
 
 #testset = GTSRB_Test(
-	#root_dir='/content/data/Images_0_ppm',
+	#root_dir='/content/data/Images_2_ppm',
 	#transform=transform_test
 #)
 
 
 #model-dataset
-if not os.path.exists('./grad-cam_/0-0'):
-	os.makedirs('./grad-cam_/0-0')
+if not os.path.exists('./grad-cam_/2-0'):
+	os.makedirs('./grad-cam_/2-0')
 
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
@@ -97,13 +97,16 @@ def rep(model, device, test_loader, cam):
 
 		# New Grad-CAM code starts here
 		#cam_targets = pred.data.max(1)[1].cpu().numpy()  # Get the class indices
+		#grayscale_cam = cam(input_tensor=X, targets=None, aug_smooth=True, eigen_smooth=True)
 		grayscale_cam = cam(input_tensor=X, targets=None)
 
 		for j in range(grayscale_cam.shape[0]):
 			visualization = show_cam_on_image(data.cpu().numpy()[j].transpose(1, 2, 0), grayscale_cam[j, :])
 
-			cv2.imwrite(f'./grad-cam_/0-0/gradcam_img{counter}_label{str(y.cpu().numpy()[j])}.jpg', visualization)
+			cv2.imwrite(f'./grad-cam_/2-0/gradcam_img{counter}.jpg', visualization)
 			counter += 1
+
+		#break
 	
 	#convert to numpy arrays
 	targets = np.array(targets)
